@@ -4,12 +4,12 @@ import { useState } from 'react';
 
 export default function Home() {
   const [inputText, setInputText] = useState('');
-  const [outputText, setOutputText] = useState('');
+  const [outputTweets, setOutputTweets] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleRemix = async () => {
     setIsLoading(true);
-    setOutputText(''); // Clear previous output
+    setOutputTweets([]); // Clear previous output
     
     try {
       console.log('Sending request to remix API...');
@@ -33,18 +33,23 @@ export default function Home() {
         throw new Error(data.error);
       }
       
-      setOutputText(data.remixedText);
+      setOutputTweets(data.remixedText);
     } catch (error: any) {
       console.error('Error remixing text:', error);
-      setOutputText(`Error occurred while remixing text: ${error?.message || 'Unknown error'}`);
+      setOutputTweets(Array(6).fill(`Error occurred while remixing text: ${error?.message || 'Unknown error'}`));
     } finally {
       setIsLoading(false);
     }
   };
 
+  const openTweetIntent = (tweet: string) => {
+    const tweetText = encodeURIComponent(tweet);
+    window.open(`https://twitter.com/intent/tweet?text=${tweetText}`, '_blank');
+  };
+
   return (
     <div className="min-h-screen bg-[#008080] p-4">
-      <main className="max-w-4xl mx-auto bg-[#c0c0c0] border-t-2 border-l-2 border-white border-r-2 border-b-2 border-[#808080] p-2 shadow-lg">
+      <main className="max-w-6xl mx-auto bg-[#c0c0c0] border-t-2 border-l-2 border-white border-r-2 border-b-2 border-[#808080] p-2 shadow-lg">
         {/* Title bar */}
         <div className="bg-[#000080] text-white px-2 py-1 flex justify-between items-center mb-2">
           <h1 className="text-sm font-bold">Content Remixer</h1>
@@ -58,7 +63,7 @@ export default function Home() {
         <div className="space-y-4 p-2">
           <div>
             <label htmlFor="input" className="block text-sm mb-1 text-black font-semibold">
-              Enter text to remix:
+              Enter text to remix into tweets:
             </label>
             <textarea
               id="input"
@@ -77,11 +82,35 @@ export default function Home() {
             {isLoading ? 'Remixing...' : 'Remix Content'}
           </button>
 
-          {outputText && (
+          {outputTweets.length > 0 && (
             <div>
-              <h2 className="text-sm mb-1 text-black font-semibold">Remixed Output:</h2>
-              <div className="w-full min-h-40 p-2 bg-white border-t border-l border-[#808080] border-r border-b border-white font-[system-ui] text-sm text-black whitespace-pre-wrap">
-                {outputText}
+              <h2 className="text-sm mb-2 text-black font-semibold">Remixed Tweets:</h2>
+              <div className="grid grid-cols-3 gap-3">
+                {outputTweets.map((tweet, index) => (
+                  <div 
+                    key={index}
+                    className="bg-[#c0c0c0] border-t border-l border-white border-r border-b border-[#808080] p-2"
+                  >
+                    {/* Tweet header */}
+                    <div className="bg-[#000080] text-white px-2 py-0.5 text-xs font-bold mb-2 flex justify-between items-center">
+                      <span>Tweet {index + 1}</span>
+                      <span className="text-[10px]">{tweet.length} / 140</span>
+                    </div>
+                    {/* Tweet content */}
+                    <div className="bg-white border-t border-l border-[#808080] border-r border-b border-white p-2 text-sm text-black min-h-[100px]">
+                      {tweet}
+                    </div>
+                    {/* Tweet button */}
+                    <div className="mt-2 flex justify-end">
+                      <button
+                        onClick={() => openTweetIntent(tweet)}
+                        className="px-3 py-0.5 bg-[#c0c0c0] border-t border-l border-white border-r border-b border-[#808080] text-xs text-black hover:bg-[#dfdfdf] active:border-t-[1px] active:border-l-[1px] active:border-[#808080] active:border-r active:border-b active:border-black font-semibold"
+                      >
+                        Tweet This
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
